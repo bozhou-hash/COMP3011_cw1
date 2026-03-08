@@ -36,6 +36,24 @@ class ProductGroupResponse(ProductGroupBase):
     class Config:
         from_attributes = True
 
+# -------- Listing --------
+class ListingBase(BaseModel):
+    retailer_id: int
+    original_name: str
+    own_brand: bool
+    category: str
+
+
+class ListingCreate(ListingBase):
+    pass
+
+
+class Listing(ListingBase):
+    id: int
+    product_id: int
+
+    class Config:
+        from_attributes = True
 
 # -------- Price --------
 class PriceBase(BaseModel):

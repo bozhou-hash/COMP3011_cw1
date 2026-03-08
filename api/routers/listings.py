@@ -1,8 +1,9 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
+from sqlalchemy import func
 from typing import List
 
-from .. import models
+from .. import models, schemas
 from ..database import get_db
 
 router = APIRouter(
@@ -41,6 +42,46 @@ def get_listing(listing_id: int, db: Session = Depends(get_db)):
         raise HTTPException(status_code=404, detail="Listing not found")
 
     return listing
+
+
+# -------------------------
+# CREATE LISTING
+# -------------------------
+@router.post("/", response_model=schemas.Listing)
+def create_listing(listing: schemas.ListingCreate, db: Session = Depends(get_db)):
+
+    retailer = db.query(models.Retailer).filter(
+        models.Retailer.id == listing.retailer_id
+    ).first()
+
+    if not retailer:
+        raise HTTPException(status_code=404, detail="Retailer not found")
+
+    product = db.query(models.Product).filter(
+        func.lower(models.Product.product_name_clean) == listing.original_name.lower()
+    ).first()
+
+    if not product:
+        product = models.Product(
+            product_name_clean=listing.original_name
+        )
+        db.add(product)
+        db.commit()
+        db.refresh(product)
+
+    new_listing = models.ProductListing(
+        product_id=product.id,
+        retailer_id=listing.retailer_id,
+        original_name=listing.original_name,
+        own_brand=listing.own_brand,
+        category=listing.category
+    )
+
+    db.add(new_listing)
+    db.commit()
+    db.refresh(new_listing)
+
+    return new_listing
 
 
 # -------------------------
