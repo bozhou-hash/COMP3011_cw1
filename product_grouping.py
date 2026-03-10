@@ -43,15 +43,6 @@ FILLER_WORDS = {
     "new", "fresh", "british"
 }
 
-# Words to remove from display names (retailer branding etc.)
-DISPLAY_REMOVE_WORDS = {
-    "tesco", "aldi", "asda", "morrisons",
-    "sainsbury", "sains", "lidl",
-    "finest", "everyday", "essentials",
-    "extra", "special", "choice",
-    "own", "brand"
-}
-
 # ======================================
 # QUANTITY EXTRACTION
 # ======================================
@@ -188,35 +179,7 @@ final_group_ids = set(assigned_groups.values())
 print("Final groups after smart merge:", len(final_group_ids))
 
 # ======================================
-# GENERATE DISPLAY NAME FOR THE FINAL TABLE
-# ======================================
-
-def generate_display_name(names_series, quantity):
-
-    combined = " ".join(names_series.tolist()).lower()
-    combined = re.sub(r"[^\w\s]", " ", combined)
-
-    tokens = combined.split()
-
-    # Remove retailer branding
-    tokens = [t for t in tokens if t not in DISPLAY_REMOVE_WORDS]
-
-    # Count frequency
-    token_freq = pd.Series(tokens).value_counts()
-
-    # Keep most common meaningful tokens
-    common_tokens = token_freq.head(6).index.tolist()
-
-    name = " ".join(common_tokens)
-
-    # Add quantity back if exists
-    if quantity:
-        name = f"{name} {quantity}"
-
-    return name.title().strip()
-
-# ======================================
-# BUILD FINAL GROUP TABLE (GENERIC CLEAN NAMES)
+# BUILD FINAL GROUP TABLE
 # ======================================
 
 group_records = []
@@ -226,20 +189,15 @@ new_group_id = 1
 for gid in final_group_ids:
 
     indices = [i for i, g in assigned_groups.items() if g == gid]
-
-    group_names = df.loc[indices, "product_name_clean"]
-    category = df.loc[indices[0], "category"]
-    quantity = df.loc[indices[0], "quantity"]
-
-    best_name = generate_display_name(group_names, quantity)
+    rep_idx = indices[0]
 
     group_id_map[gid] = new_group_id
 
     group_records.append({
         "id": new_group_id,
-        "group_name": best_name,
-        "category": category,
-        "quantity": quantity
+        "group_name": df.loc[rep_idx, "normalized"],
+        "category": df.loc[rep_idx, "category"],
+        "quantity": df.loc[rep_idx, "quantity"]
     })
 
     new_group_id += 1
@@ -251,6 +209,22 @@ print("Total groups to insert:", len(group_records))
 # ======================================
 
 cur = conn.cursor()
+
+# CREATE PRODUCT GROUPS TABLE IF NOT EXISTS
+cur.execute("""
+CREATE TABLE IF NOT EXISTS product_groups (
+    id SERIAL PRIMARY KEY,
+    group_name TEXT NOT NULL,
+    category TEXT,
+    quantity TEXT
+);
+""")
+
+cur.execute("CREATE INDEX IF NOT EXISTS idx_product_groups_category ON product_groups(category);")
+cur.execute("CREATE INDEX IF NOT EXISTS idx_product_groups_quantity ON product_groups(quantity);")
+
+conn.commit()
+print("Product_groups table ready.")
 
 cur.execute("TRUNCATE TABLE product_groups RESTART IDENTITY CASCADE;")
 conn.commit()

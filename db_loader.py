@@ -13,8 +13,60 @@ conn = psycopg2.connect(
 
 cur = conn.cursor()
 
-df = pd.read_csv("full_dataset_with_unit_price.csv")
+# ===============================
+# CREATE TABLES
+# ===============================
+sql_commands = [
+    """
+    CREATE TABLE IF NOT EXISTS retailers (
+        id SERIAL PRIMARY KEY,
+        name TEXT UNIQUE NOT NULL
+    );
+    """,
+    """
+    CREATE TABLE IF NOT EXISTS products (
+        id SERIAL PRIMARY KEY,
+        product_name_clean TEXT NOT NULL,
+        product_group_id INT
+    );
+    """,
+    """
+    CREATE TABLE IF NOT EXISTS product_listings (
+        id SERIAL PRIMARY KEY,
+        product_id INT NOT NULL REFERENCES products(id) ON DELETE CASCADE,
+        retailer_id INT NOT NULL REFERENCES retailers(id) ON DELETE CASCADE,
+        original_name TEXT,
+        own_brand BOOLEAN,
+        category TEXT,
+        UNIQUE(product_id, retailer_id)
+    );
+    """,
+    """
+    CREATE TABLE IF NOT EXISTS prices (
+        id SERIAL PRIMARY KEY,
+        listing_id INT NOT NULL REFERENCES product_listings(id) ON DELETE CASCADE,
+        date DATE NOT NULL,
+        price NUMERIC(10,2) NOT NULL,
+        unit_price NUMERIC(10,4),
+        UNIQUE(listing_id, date)
+    );
+    """,
+    "CREATE INDEX IF NOT EXISTS idx_prices_listing ON prices(listing_id);",
+    "CREATE INDEX IF NOT EXISTS idx_prices_date ON prices(date);",
+    "CREATE INDEX IF NOT EXISTS idx_listings_product ON product_listings(product_id);",
+    "CREATE INDEX IF NOT EXISTS idx_listings_retailer ON product_listings(retailer_id);"
+]
 
+for command in sql_commands:
+    cur.execute(command)
+
+conn.commit()
+print("Tables created or verified.")
+
+# ===============================
+# LOAD CSV
+# ===============================
+df = pd.read_csv("full_dataset_with_unit_price.csv")
 df["date"] = pd.to_datetime(df["date"], format="%Y%m%d", errors="coerce")
 
 # ==================================
