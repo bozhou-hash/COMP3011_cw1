@@ -237,7 +237,7 @@ This report contains:
 
 API Endpoint Testing Report
 
-https://leeds365-my.sharepoint.com/:b:/g/personal/zbxj0262_leeds_ac_uk/IQDVpFUAABqqQrjXBUhH2lWbAVZc77zAApi3adJ8qS8UH5s?e=4Tl2b2
+[https://github.com/bozhou-hash/COMP3011_cw1/blob/main/API%20Documentation.pdf](https://github.com/bozhou-hash/COMP3011_cw1/blob/main/API%20Documentation.pdf)
 
 ---
 
