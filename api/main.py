@@ -15,5 +15,3 @@ app.include_router(prices.router)
 @app.get("/")
 def root():
     return {"message": "Supermarket API is running"}
-
-# uvicorn api.main:app --reload --host 127.0.0.1 --port 9000
