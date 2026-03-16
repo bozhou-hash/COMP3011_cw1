@@ -1,5 +1,5 @@
 from fastapi import FastAPI
-from .routers import groups, retailers, listings, prices
+from .routers import auth, groups, retailers, listings, prices
 
 app = FastAPI(
     title="Supermarket Price Comparison API",
@@ -7,6 +7,7 @@ app = FastAPI(
     version="1.0.0"
 )
 
+app.include_router(auth.router)
 app.include_router(groups.router)
 app.include_router(retailers.router)
 app.include_router(listings.router)
