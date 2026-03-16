@@ -45,6 +45,26 @@ def get_price(price_id: int, db: Session = Depends(get_db)):
 @router.post("/", response_model=schemas.PriceResponse)
 def create_price(price: schemas.PriceCreate, db: Session = Depends(get_db)):
 
+    # Check listing exists
+    listing = db.query(models.ProductListing).filter(
+        models.ProductListing.id == price.listing_id
+    ).first()
+
+    if not listing:
+        raise HTTPException(status_code=404, detail="Listing not found")
+
+    # Check duplicate price for same listing + date
+    existing_price = db.query(models.Price).filter(
+        models.Price.listing_id == price.listing_id,
+        models.Price.date == price.date
+    ).first()
+
+    if existing_price:
+        raise HTTPException(
+            status_code=400,
+            detail="Price for this listing and date already exists"
+        )
+
     db_price = models.Price(**price.model_dump())
 
     db.add(db_price)
@@ -59,7 +79,6 @@ def create_price(price: schemas.PriceCreate, db: Session = Depends(get_db)):
 # -------------------------
 @router.put("/{price_id}", response_model=schemas.PriceResponse)
 def update_price(price_id: int, price: schemas.PriceCreate, db: Session = Depends(get_db)):
-    print ("Update function called")
 
     db_price = db.query(models.Price).filter(models.Price.id == price_id).first()
 
