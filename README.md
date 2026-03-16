@@ -3,15 +3,16 @@
 ## Table of Contents
 1. [Introduction](#introduction)
 2. [Live Deployment](#live-deployment)
-2. [Key Features](#key-features)
-3. [Tech Stack](#tech-stack)
-4. [Project Structure](#project-structure)
-5. [Python Requirements](#python-requirements)
-6. [Setup & Installation](#setup--installation)
-7. [Running the API](#running-the-api)
-8. [API Functions Overview](#api-functions-overview)
-9. [Common Issues & Debugging](#common-issues--debugging)
-10. [Development Notes](#development-notes)
+3. [Key Features](#key-features)
+4. [Tech Stack](#tech-stack)
+5. [Project Structure](#project-structure)
+6. [Python Requirements](#python-requirements)
+7. [Setup & Installation](#setup--installation)
+8. [Running the API](#running-the-api)
+9. [API Functions Overview](#api-functions-overview)
+10. [API Endpoint Testing](#api-endpoint-testing)
+11. [Common Issues & Debugging](#common-issues--debugging)
+12. [Development Notes](#development-notes)
 
 ---
 
@@ -183,7 +184,7 @@ http://127.0.0.1:8000
 
 ### Interactive Documentation
 
-Swagger UI: 
+Local Swagger UI: 
 ```
 http://127.0.0.1:8000/docs
 ```
@@ -221,6 +222,22 @@ http://127.0.0.1:8000/redoc
 - Retrieve price history 
 - Update price records 
 - Delete price records
+
+---
+
+## API Endpoint Testing
+
+A complete demonstration of all implemented API endpoints is provided in the following document.
+
+This report contains:
+- Executed requests for every endpoint
+- Returned JSON responses
+- HTTP status codes (200, 201, 404, etc.)
+- Validation of CRUD functionality
+
+API Endpoint Testing Report
+
+[https://github.com/bozhou-hash/COMP3011_cw1/blob/main/API%20Documentation.pdf](https://github.com/bozhou-hash/COMP3011_cw1/blob/main/API%20Documentation.pdf)
 
 ---
 
