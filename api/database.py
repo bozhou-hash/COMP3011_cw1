@@ -8,7 +8,6 @@ if os.getenv("RAILWAY_DATABASE_URL") is None:
         from dotenv import load_dotenv
         env_path = Path(__file__).parent.parent / ".env"
         load_dotenv(dotenv_path=env_path)
-        print("Loaded local .env file")
     except ImportError:
         print("dotenv not installed, skipping local .env load")
 
