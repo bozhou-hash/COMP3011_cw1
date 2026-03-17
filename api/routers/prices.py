@@ -5,6 +5,8 @@ from sqlalchemy import func
 
 from .. import models, schemas
 from ..database import get_db
+from ..dependencies import verify_token
+
 router = APIRouter(
     prefix="/prices",
     tags=["Prices"]
@@ -42,7 +44,7 @@ def get_price(price_id: int, db: Session = Depends(get_db)):
 # -------------------------
 # CREATE PRICE
 # -------------------------
-@router.post("/", response_model=schemas.PriceResponse)
+@router.post("/", response_model=schemas.PriceResponse, dependencies=[Depends(verify_token)])
 def create_price(price: schemas.PriceCreate, db: Session = Depends(get_db)):
 
     # Check listing exists
@@ -77,7 +79,7 @@ def create_price(price: schemas.PriceCreate, db: Session = Depends(get_db)):
 # -------------------------
 # UPDATE PRICE
 # -------------------------
-@router.put("/{price_id}", response_model=schemas.PriceResponse)
+@router.put("/{price_id}", response_model=schemas.PriceResponse, dependencies=[Depends(verify_token)])
 def update_price(price_id: int, price: schemas.PriceCreate, db: Session = Depends(get_db)):
 
     db_price = db.query(models.Price).filter(models.Price.id == price_id).first()
@@ -97,7 +99,7 @@ def update_price(price_id: int, price: schemas.PriceCreate, db: Session = Depend
 # -------------------------
 # DELETE PRICE
 # -------------------------
-@router.delete("/{price_id}")
+@router.delete("/{price_id}", dependencies=[Depends(verify_token)])
 def delete_price(price_id: int, db: Session = Depends(get_db)):
 
     db_price = db.query(models.Price).filter(models.Price.id == price_id).first()
