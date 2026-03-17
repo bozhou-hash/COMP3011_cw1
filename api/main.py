@@ -1,5 +1,9 @@
 from fastapi import FastAPI
+from api.database import engine
+from api import models
 from .routers import auth, groups, retailers, listings, prices
+
+models.Base.metadata.create_all(bind=engine)
 
 app = FastAPI(
     title="Supermarket Price Comparison API",
