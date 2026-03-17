@@ -91,18 +91,28 @@ Deployment infrastructure:
 COMP3011_API/
 │
 ├── api/
-│   │
+│   ├── auth.py            # Define functions for authentication token
 │   ├── main.py            # FastAPI application entry point
 │   ├── database.py        # Database connection & session management
 │   ├── models.py          # SQLAlchemy ORM models
 │   ├── schemas.py         # Pydantic schemas
-│   │
+│   ├── dependencies.py    # Define functions to verify authentication token
 │   └── routers/
 │       ├── __init__.py
+│       ├── auth.py        # Authentication endpoints
 │       ├── groups.py      # Product group endpoints
 │       ├── retailers.py   # Retailer endpoints
 │       ├── listings.py    # Product listing endpoints
 │       └── prices.py      # Price endpoints
+│
+├── testing/
+│   ├── conftest.py
+│   ├── test_auth.py       # Tests for authentication endpoints
+│   ├── test_groups.py     # Tests for product group endpoints
+│   ├── test_listings.py   # Tests for listing endpoints
+│   ├── test_prices.py     # Tests for price endpoints
+│   ├── test_retailers.py  # Test for retailer endpoints
+│   └── test_root.py       # Test for root endpoint
 │
 ├── dataset_cleaner.py     # Dataset cleaning script
 ├── db_loader.py           # Loads cleaned dataset into PostgreSQL
@@ -197,6 +207,10 @@ http://127.0.0.1:8000/redoc
 ---
 
 ## API Functions Overview
+
+### Authentication
+- Register new users
+- User logins
 
 ### Groups
 - Create product groups
