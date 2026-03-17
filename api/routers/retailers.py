@@ -4,6 +4,7 @@ from typing import List
 
 from .. import models, schemas
 from ..database import get_db
+from ..dependencies import verify_token
 
 router = APIRouter(
     prefix="/retailers",
@@ -34,7 +35,7 @@ def get_retailer(retailer_id: int, db: Session = Depends(get_db)):
 # -------------------------
 # CREATE
 # -------------------------
-@router.post("/", response_model=schemas.RetailerResponse)
+@router.post("/", response_model=schemas.RetailerResponse, dependencies=[Depends(verify_token)])
 def create_retailer(retailer: schemas.RetailerCreate, db: Session = Depends(get_db)):
 
     db_retailer = models.Retailer(name=retailer.name)
@@ -49,7 +50,7 @@ def create_retailer(retailer: schemas.RetailerCreate, db: Session = Depends(get_
 # -------------------------
 # UPDATE
 # -------------------------
-@router.put("/{retailer_id}", response_model=schemas.RetailerResponse)
+@router.put("/{retailer_id}", response_model=schemas.RetailerResponse, dependencies=[Depends(verify_token)])
 def update_retailer(retailer_id: int, retailer: schemas.RetailerCreate, db: Session = Depends(get_db)):
 
     db_retailer = db.query(models.Retailer).filter(models.Retailer.id == retailer_id).first()
@@ -68,7 +69,7 @@ def update_retailer(retailer_id: int, retailer: schemas.RetailerCreate, db: Sess
 # -------------------------
 # DELETE
 # -------------------------
-@router.delete("/{retailer_id}")
+@router.delete("/{retailer_id}", dependencies=[Depends(verify_token)])
 def delete_retailer(retailer_id: int, db: Session = Depends(get_db)):
 
     db_retailer = db.query(models.Retailer).filter(models.Retailer.id == retailer_id).first()
