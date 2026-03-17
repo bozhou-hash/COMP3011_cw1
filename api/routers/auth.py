@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Body, Form
 from sqlalchemy.orm import Session
 from fastapi.security import OAuth2PasswordRequestForm
 
@@ -11,21 +11,34 @@ router = APIRouter(
     tags=["Authentication"]
 )
 
-@router.post("/register", response_model=schemas.UserResponse)
-def register(user: schemas.UserCreate, db: Session = Depends(get_db)):
+# -------------------------
+# REGISTER USER
+# -------------------------
+@router.post(
+    "/register",
+    response_model=schemas.UserResponse,
+    summary="Register a new user",
+    description="Creates a new user account. The password will be securely hashed before being stored in the database."
+)
+def register(
+    username: str = Form(..., description="Unique username for the new account"),
+    email: str = Form(..., description="User email address"),
+    password: str = Form(..., description="User password (will be hashed)"),
+    db: Session = Depends(get_db)
+):
 
     existing_user = db.query(models.User).filter(
-        models.User.username == user.username
+        models.User.username == username
     ).first()
 
     if existing_user:
         raise HTTPException(status_code=400, detail="Username already exists")
 
-    hashed_pw = hash_password(user.password)
+    hashed_pw = hash_password(password)
 
     db_user = models.User(
-        username=user.username,
-        email=user.email,
+        username=username,
+        email=email,
         hashed_password=hashed_pw
     )
 
@@ -35,9 +48,20 @@ def register(user: schemas.UserCreate, db: Session = Depends(get_db)):
 
     return db_user
 
-@router.post("/login", response_model=schemas.Token)
-def login(form_data: OAuth2PasswordRequestForm = Depends(),
-          db: Session = Depends(get_db)):
+
+# -------------------------
+# USER LOGIN
+# -------------------------
+@router.post(
+    "/login",
+    response_model=schemas.Token,
+    summary="User login",
+    description="Authenticates a user using their username and password and returns a JWT access token."
+)
+def login(
+    form_data: OAuth2PasswordRequestForm = Depends(),
+    db: Session = Depends(get_db)
+):
 
     user = db.query(models.User).filter(
         models.User.username == form_data.username
