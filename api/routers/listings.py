@@ -5,6 +5,7 @@ from typing import List
 
 from .. import models, schemas
 from ..database import get_db
+from ..dependencies import verify_token
 
 router = APIRouter(
     prefix="/listings",
@@ -47,7 +48,7 @@ def get_listing(listing_id: int, db: Session = Depends(get_db)):
 # -------------------------
 # CREATE LISTING
 # -------------------------
-@router.post("/", response_model=schemas.Listing)
+@router.post("/", response_model=schemas.Listing, dependencies=[Depends(verify_token)])
 def create_listing(listing: schemas.ListingCreate, db: Session = Depends(get_db)):
 
     retailer = db.query(models.Retailer).filter(
@@ -87,7 +88,7 @@ def create_listing(listing: schemas.ListingCreate, db: Session = Depends(get_db)
 # -------------------------
 # DELETE LISTING
 # -------------------------
-@router.delete("/{listing_id}")
+@router.delete("/{listing_id}", dependencies=[Depends(verify_token)])
 def delete_listing(listing_id: int, db: Session = Depends(get_db)):
 
     listing = db.query(models.ProductListing).filter(
