@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi import APIRouter, Depends, HTTPException, Query, Form
 from sqlalchemy.orm import Session
 from sqlalchemy import func
 from typing import List, Optional
@@ -15,12 +15,17 @@ router = APIRouter(
 # -------------------------
 # GET ALL (with filtering)
 # -------------------------
-@router.get("/", response_model=List[schemas.ProductGroupResponse])
+@router.get(
+    "/",
+    response_model=List[schemas.ProductGroupResponse],
+    summary="Retrieve product groups",
+    description="Returns a list of product groups. Optional filters can be used to search by category or group name."
+)
 def get_groups(
-    skip: int = 0,
-    limit: int = 50,
-    category: Optional[str] = None,
-    search: Optional[str] = None,
+    skip: int = Query(0),
+    limit: int = Query(50),
+    category: Optional[str] = Query(None),
+    search: Optional[str] = Query(None),
     db: Session = Depends(get_db)
 ):
     query = db.query(models.ProductGroup)
@@ -36,7 +41,12 @@ def get_groups(
 # -------------------------
 # GET ONE
 # -------------------------
-@router.get("/{group_id}", response_model=schemas.ProductGroupResponse)
+@router.get(
+    "/{group_id}",
+    response_model=schemas.ProductGroupResponse,
+    summary="Retrieve a product group",
+    description="Returns the details of a specific product group using its ID."
+)
 def get_group(group_id: int, db: Session = Depends(get_db)):
     group = db.query(models.ProductGroup).filter(models.ProductGroup.id == group_id).first()
 
@@ -48,7 +58,11 @@ def get_group(group_id: int, db: Session = Depends(get_db)):
 # -------------------------
 # CHEAPEST RETAILER FOR GROUP
 # -------------------------
-@router.get("/{group_id}/cheapest")
+@router.get(
+    "/{group_id}/cheapest",
+    summary="Retrieve cheapest retailer",
+    description="Returns the retailer offering the lowest price for products within a specific group."
+)
 def get_cheapest(group_id: int, db: Session = Depends(get_db)):
 
     result = (
@@ -79,7 +93,11 @@ def get_cheapest(group_id: int, db: Session = Depends(get_db)):
 # -------------------------
 # PRICE HISTORY
 # -------------------------
-@router.get("/{group_id}/history")
+@router.get(
+    "/{group_id}/history",
+    summary="Retrieve price history",
+    description="Returns historical price data for all products within a specific group."
+)
 def get_price_history(group_id: int, db: Session = Depends(get_db)):
 
     result = (
@@ -111,26 +129,54 @@ def get_price_history(group_id: int, db: Session = Depends(get_db)):
 # -------------------------
 # CREATE
 # -------------------------
-@router.post("/", response_model=schemas.ProductGroupResponse, dependencies=[Depends(verify_token)])
-def create_group(group: schemas.ProductGroupCreate, db: Session = Depends(get_db)):
-    db_group = models.ProductGroup(**group.model_dump())
+@router.post(
+    "/",
+    response_model=schemas.ProductGroupResponse,
+    dependencies=[Depends(verify_token)],
+    summary="Create product group",
+    description="Creates a new product group in the database."
+)
+def create_group(
+    group_name: str = Form(...),
+    category: str = Form(...),
+    db: Session = Depends(get_db)
+):
+
+    db_group = models.ProductGroup(
+        group_name=group_name,
+        category=category
+    )
+
     db.add(db_group)
     db.commit()
     db.refresh(db_group)
+
     return db_group
 
 # -------------------------
 # UPDATE
 # -------------------------
-@router.put("/{group_id}", response_model=schemas.ProductGroupResponse, dependencies=[Depends(verify_token)])
-def update_group(group_id: int, group: schemas.ProductGroupCreate, db: Session = Depends(get_db)):
+@router.put(
+    "/{group_id}",
+    response_model=schemas.ProductGroupResponse,
+    dependencies=[Depends(verify_token)],
+    summary="Update product group",
+    description="Updates the details of an existing product group."
+)
+def update_group(
+    group_id: int,
+    group_name: str = Form(...),
+    category: str = Form(...),
+    db: Session = Depends(get_db)
+):
+
     db_group = db.query(models.ProductGroup).filter(models.ProductGroup.id == group_id).first()
 
     if not db_group:
         raise HTTPException(status_code=404, detail="Group not found")
 
-    for key, value in group.model_dump().items():
-        setattr(db_group, key, value)
+    db_group.group_name = group_name
+    db_group.category = category
 
     db.commit()
     db.refresh(db_group)
@@ -140,8 +186,14 @@ def update_group(group_id: int, group: schemas.ProductGroupCreate, db: Session =
 # -------------------------
 # DELETE
 # -------------------------
-@router.delete("/{group_id}", dependencies=[Depends(verify_token)])
+@router.delete(
+    "/{group_id}",
+    dependencies=[Depends(verify_token)],
+    summary="Delete product group",
+    description="Deletes a product group from the database using its ID."
+)
 def delete_group(group_id: int, db: Session = Depends(get_db)):
+
     db_group = db.query(models.ProductGroup).filter(models.ProductGroup.id == group_id).first()
 
     if not db_group:
