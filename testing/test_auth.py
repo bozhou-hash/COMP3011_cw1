@@ -1,6 +1,6 @@
-import requests
+import pytest
+from datetime import date
 
-BASE_URL = "http://127.0.0.1:9000"
 
 # Test user credentials
 test_user = {
@@ -10,103 +10,85 @@ test_user = {
 }
 
 
-def test_register():
-    print("\nRunning REGISTER test...")
-
-    response = requests.post(
-        f"{BASE_URL}/auth/register",
-        json=test_user
+def test_register(client):
+    response = client.post(
+        "/auth/register",
+        data=test_user
     )
 
-    if response.status_code in [200, 201]:
-        print("PASS: User registered successfully")
-    elif response.status_code == 400:
-        print("INFO: User already exists (acceptable)")
-    else:
-        print("FAIL:", response.status_code, response.text)
+    # user may already exist if tests run multiple times
+    assert response.status_code in [200, 201, 400]
 
 
-def test_login():
-    print("\nRunning LOGIN test...")
+def test_login(client):
 
-    response = requests.post(
-        f"{BASE_URL}/auth/login",
+    response = client.post(
+        "/auth/login",
         data={
             "username": test_user["username"],
             "password": test_user["password"]
         }
     )
 
-    if response.status_code == 200:
-        token = response.json().get("access_token")
-        print("PASS: Login successful")
-        return token
-    else:
-        print("FAIL:", response.status_code, response.text)
-        return None
+    assert response.status_code == 200
+
+    body = response.json()
+
+    assert "access_token" in body
+    assert body["token_type"] == "bearer"
 
 
-def test_protected_endpoint_without_token():
-    print("\nRunning UNAUTHORISED ACCESS test...")
+def test_protected_endpoint_without_token(client):
 
-    response = requests.post(
-        f"{BASE_URL}/prices",
-        json={
+    response = client.post(
+        "/prices",
+        data={
             "listing_id": 1,
             "price": 5.99,
-            "date": "2024-01-01"
+            "date": date.today()
         }
     )
 
-    if response.status_code == 401:
-        print("PASS: Endpoint correctly blocked unauthorised request")
-    else:
-        print("FAIL:", response.status_code)
+    assert response.status_code == 401
 
 
-def test_protected_endpoint_with_token():
+def test_protected_endpoint_with_token(client):
 
-    print("\nRunning AUTHORISED ACCESS test...")
+    login_response = client.post(
+        "/auth/login",
+        data={
+            "username": test_user["username"],
+            "password": test_user["password"]
+        }
+    )
 
-    token = test_login()
+    token = login_response.json()["access_token"]
 
     headers = {
         "Authorization": f"Bearer {token}"
     }
 
-    response = requests.post(
-        f"{BASE_URL}/prices",
+    response = client.post(
+        "/prices",
         headers=headers,
-        json={
+        data={
             "listing_id": 1,
             "price": 5.99,
-            "date": "2024-01-01"
+            "date": date.today()
         }
     )
 
-    if response.status_code in [200, 201]:
-        print("PASS: Authenticated request succeeded")
-    elif response.status_code == 404:
-        print("INFO: Listing does not exist (endpoint protected correctly)")
-    else:
-        print("FAIL:", response.status_code, response.text)
+    # listing might not exist in test DB
+    assert response.status_code in [200, 201, 400, 404]
 
+def test_login_invalid_password(client):
 
-if __name__ == "__main__":
+    response = client.post(
+        "/auth/login",
+        data={
+            "username": test_user["username"],
+            "password": "wrongpassword"
+        }
+    )
 
-    print("\n==============================")
-    print("AUTHENTICATION TESTS STARTING")
-    print("==============================")
-
-    test_register()
-
-    token = test_login()
-
-    test_protected_endpoint_without_token()
-
-    if token:
-        test_protected_endpoint_with_token(token)
-
-    print("\n==============================")
-    print("AUTHENTICATION TESTS COMPLETE")
-    print("==============================")
+    assert response.status_code == 401
