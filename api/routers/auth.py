@@ -1,6 +1,5 @@
 from fastapi import APIRouter, Depends, HTTPException, Form
 from sqlalchemy.orm import Session
-from fastapi.security import OAuth2PasswordRequestForm
 
 from ..database import get_db
 from .. import models, schemas
@@ -59,18 +58,19 @@ def register(
     description="Authenticates a user using their username and password and returns a JWT access token."
 )
 def login(
-    form_data: OAuth2PasswordRequestForm = Depends(),
+    username: str = Form(..., description="User's username"),
+    password: str = Form(..., description="User's password"),
     db: Session = Depends(get_db)
 ):
 
     user = db.query(models.User).filter(
-        models.User.username == form_data.username
+        models.User.username == username
     ).first()
 
     if not user:
         raise HTTPException(status_code=401, detail="Invalid username")
 
-    if not verify_password(form_data.password, user.hashed_password):
+    if not verify_password(password, user.hashed_password):
         raise HTTPException(status_code=401, detail="Invalid password")
 
     token = create_access_token({"sub": user.username})
