@@ -21,9 +21,9 @@ router = APIRouter(
     description="Creates a new user account. The password will be securely hashed before being stored in the database."
 )
 def register(
-    username: str = Form(..., description="Unique username for the new account"),
-    email: str = Form(..., description="User email address"),
-    password: str = Form(..., description="User password (will be hashed)"),
+    username: str = Form(...),
+    email: str = Form(...),
+    password: str = Form(...),
     db: Session = Depends(get_db)
 ):
 
