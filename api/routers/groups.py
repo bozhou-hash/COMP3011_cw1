@@ -4,6 +4,7 @@ from sqlalchemy import func
 from typing import List, Optional
 from .. import models, schemas
 from ..database import get_db
+from ..dependencies import verify_token
 
 router = APIRouter(
     prefix="/groups",
@@ -110,7 +111,7 @@ def get_price_history(group_id: int, db: Session = Depends(get_db)):
 # -------------------------
 # CREATE
 # -------------------------
-@router.post("/", response_model=schemas.ProductGroupResponse)
+@router.post("/", response_model=schemas.ProductGroupResponse, dependencies=[Depends(verify_token)])
 def create_group(group: schemas.ProductGroupCreate, db: Session = Depends(get_db)):
     db_group = models.ProductGroup(**group.model_dump())
     db.add(db_group)
@@ -121,7 +122,7 @@ def create_group(group: schemas.ProductGroupCreate, db: Session = Depends(get_db
 # -------------------------
 # UPDATE
 # -------------------------
-@router.put("/{group_id}", response_model=schemas.ProductGroupResponse)
+@router.put("/{group_id}", response_model=schemas.ProductGroupResponse, dependencies=[Depends(verify_token)])
 def update_group(group_id: int, group: schemas.ProductGroupCreate, db: Session = Depends(get_db)):
     db_group = db.query(models.ProductGroup).filter(models.ProductGroup.id == group_id).first()
 
@@ -139,7 +140,7 @@ def update_group(group_id: int, group: schemas.ProductGroupCreate, db: Session =
 # -------------------------
 # DELETE
 # -------------------------
-@router.delete("/{group_id}")
+@router.delete("/{group_id}", dependencies=[Depends(verify_token)])
 def delete_group(group_id: int, db: Session = Depends(get_db)):
     db_group = db.query(models.ProductGroup).filter(models.ProductGroup.id == group_id).first()
 
